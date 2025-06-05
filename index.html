@@ -2,70 +2,185 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GIF PEG ADDON</title>
   <style>
+    :root {
+      --primary-color: #00FF1F; /* Verde Limão primário */
+      --secondary-color: #00ffcc; /* Ciano/Turquesa para destaque */
+      --background-dark: #1e1e1e;
+      --text-light: #ffffff;
+      --install-text-color: #e0e0e0;
+      --neon-glow-color: #39FF14; /* Um verde limão ainda mais vibrante para o brilho */
+      --transparent-white: rgba(255, 255, 255, 0.2); /* Branco com 20% de opacidade */
+      --transparent-dark: rgba(30, 30, 30, 0.7); /* Cor original do container com 70% de opacidade */
+    }
+
     body {
       font-family: Arial, sans-serif;
       background-image: url("https://i.imgur.com/0r0d9Vw.jpeg");
-      color: #ffffff;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text-light);
       margin: 0;
       padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      justify-content: center;
     }
-    .container {
+
+    .container, .instructions-container {
       max-width: 700px;
-      margin: 60px auto;
-      background-color: #1e1e1e;
+      width: 90%;
+      margin: 20px auto;
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      text-align: center;
+      /* Ambos os contêineres usam a mesma transparência escura */
+      background-color: var(--transparent-dark); 
     }
+
+    .instructions-container {
+        text-align: left; /* Mantém o alinhamento do texto das instruções à esquerda */
+    }
+
     h1 {
-      text-align: center;
-      color: #00FF1F;
+      color: var(--primary-color);
+      margin-bottom: 25px;
     }
-    p {
-      font-size: 1.1em;
+
+    .install-intro, .pix {
+      font-size: 1.05em;
       line-height: 1.6em;
-      margin-top: 20px;
+      margin-bottom: 30px;
+      color: var(--install-text-color);
     }
-    .pix {
+
+    .install-intro strong {
+        color: var(--primary-color);
+    }
+
+    .download-list {
+      list-style: none;
+      padding: 0;
       margin-top: 30px;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+
+    .download-list li {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .download-list img {
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .download-list a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 1.1em;
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+    }
+
+    .download-list a:hover {
+      text-decoration: underline;
+      color: var(--neon-glow-color);
+      text-shadow: 0 0 5px var(--neon-glow-color),
+                   0 0 10px var(--neon-glow-color),
+                   0 0 15px var(--neon-glow-color);
+    }
+
+    .pix {
+        margin-top: 30px;
+    }
+
     .pix strong {
       font-size: 1.3em;
-      color: #00ffcc;
+      color: var(--secondary-color);
     }
-    a {
-      color: #00FF1F;
-      text-decoration: none;
+
+    .instructions-container p {
+        font-size: 1.1em;
+        line-height: 1.6em;
+        color: var(--text-light);
+        margin-bottom: 15px;
     }
-    a:hover {
-      text-decoration: underline;
+
+    .instructions-container a {
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .instructions-container a:hover {
+        text-decoration: underline;
+        color: var(--neon-glow-color);
+    }
+
+    audio {
+      margin-top: 40px;
+      width: 90%;
+      max-width: 400px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>GIF PEG TV!</h1>
-    <tr>
-<td><img alt="[   ]" height="20px" src="check.png" width="20px" /></td>
-<td><a href="plugin.video.gifpeg.tv.zip">plugin.video.gifpeg.tv.zip</a></td>
-</tr>
-<tr>
-<td><img alt="[   ]" height="20px" src="check.png" width="20px" /></td>
-<td><a href="plugin.video.f4mTester.0.0.1.zip">plugin.video.f4mTester.0.0.1.zip</a></td>
-</tr>
-<tr>
-<td><img alt="[   ]" height="20px" src="check.png" width="20px" /></td>
-<td><a href="plugin.video.f4mTester.4.2.4.zip">plugin.video.f4mTester.4.2.4.zip</a></td>
-</tr>
-</tr>
+    <h1>GIF PEG TV</h1>
+
+    
+
+    <ul class="download-list">
+      <li>
+        <img alt="Ícone de Verificação" height="20px" src="check.png" width="20px" />
+        <a href="plugin.video.gifpeg.tv.zip">plugin.video.gifpeg.tv.zip</a>
+      </li>
+      <li>
+        <img alt="Ícone de Verificação" height="20px" src="check.png" width="20px" />
+        <a href="plugin.video.f4mTester.0.0.1.zip">plugin.video.f4mTester.0.0.1.zip</a>
+      </li>
+      <li>
+        <img alt="Ícone de Verificação" height="20px" src="check.png" width="20px" />
+        <a href="plugin.video.f4mTester.4.2.4.zip">plugin.video.f4mTester.4.2.4.zip</a>
+      </li>
+    </ul>
+
+    <p>
+      <b>Instruções para a adição no gestor de arquivo:</b>
+      <br><br>
+      1. Abra o Kodi e vá até Configurações (ícone de engrenagem).
+      <br>
+      2. Clique em Gestor de Arquivos.
+      <br>
+      3. Selecione Adicionar fonte.
+      <br>
+      4. Clique em Nenhum e digite: https://gifpegtv.github.io</a>
+      <br>
+      5. Dê um nome à fonte (por exemplo: gifpegtv).
+      <br>
+      6. Clique em OK e volte à tela inicial.
+      <br>
+      7. Clique no ícone de Instalar a partir de um arquivo .zip, depois selecione a fonte que você acabou de adicionar (gifpegtv).
+    </p>
   </div>
-   <center><audio controls autoplay>
-  <source src="https://ice6.somafm.com/deepspaceone-64-aac" type="video/mp4">
-  Your browser does not support the video tag.
-</audio></center>
+
+  
+
+  <audio controls>
+    <source src="https://ice6.somafm.com/deepspaceone-64-aac" type="audio/aac">
+    Seu navegador não suporta o elemento de áudio.
+  </audio>
 </body>
 </html>
