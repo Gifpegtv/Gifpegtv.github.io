@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GIF PEG ADDON</title>
+  <title>GIF PEG ADDON - DESCONTINUADO</title>
   <style>
     :root {
       --primary-color: #00FF1F; /* Verde Limão primário */
@@ -13,6 +13,7 @@
       --install-text-color: #e0e0e0;
       --neon-glow-color: #39FF14; /* Um verde limão ainda mais vibrante para o brilho */
       --transparent-dark: rgba(30, 30, 30, 0.7); /* Cor original do container com 70% de opacidade */
+      --discontinued-color: #FF4136; /* Vermelho vibrante para a mensagem de descontinuação */
     }
 
     body {
@@ -86,6 +87,34 @@
       color: var(--primary-color);
       margin-bottom: 25px;
     }
+
+    /* Estilo para a mensagem de descontinuação */
+    .discontinued-message {
+      color: var(--discontinued-color);
+      font-size: 2.2em; /* Tamanho da fonte grande */
+      font-weight: bold;
+      margin: 30px 0;
+      padding: 20px;
+      border: 3px solid var(--discontinued-color);
+      border-radius: 10px;
+      background-color: rgba(255, 65, 54, 0.1); /* Fundo sutil */
+      box-shadow: 0 0 15px var(--discontinued-color); /* Efeito neon sutil em vermelho */
+      line-height: 1.4;
+      text-transform: uppercase;
+      animation: pulse 1.5s infinite alternate; /* Adiciona uma animação de pulsar */
+    }
+
+    @keyframes pulse {
+        from {
+            transform: scale(1);
+            opacity: 1;
+        }
+        to {
+            transform: scale(1.02);
+            opacity: 0.95;
+        }
+    }
+
 
     .install-intro, .pix {
       font-size: 1.05em;
@@ -173,8 +202,9 @@
   <div class="container">
     <h1>GIF PEG TV</h1>
 
-    
-
+    <div class="discontinued-message">
+        ADDON DESCONTINUADO<br>FOI BOM ENQUANTO DUROU<br>OBRIGADO A TODOS
+    </div>
     <ul class="download-list">
       <li>
         <img alt="Ícone de Verificação" height="20px" src="check.png" width="20px" />
