@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS CORE — MPEG-TS & HLS Proxy para Kodi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #050508;
+            --bg-secondary: #0a0a12;
+            --bg-card: rgba(15, 15, 25, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --cyan: #00d4ff;
+            --cyan-dim: rgba(0, 212, 255, 0.15);
+            --purple: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.15);
+            --accent-gradient: linear-gradient(135deg, #00d4ff 0%, #a855f7 50%, #6366f1 100%);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 16px;
+            --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background mesh */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 40%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse 50% 50% at 50% 100%, rgba(99, 102, 241, 0.05) 0%, transparent 50%);
+        }
+
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 70%);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            background: rgba(5, 5, 8, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0 24px;
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: var(--accent-gradient);
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--cyan);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px; left: 0;
+            width: 0; height: 2px;
+            background: var(--cyan);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 120px 24px 80px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--cyan);
+            margin-bottom: 32px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .badge::before {
+            content: '';
+            width: 8px; height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .hero h1 .gradient {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            margin-top: 64px;
+            padding: 24px;
+            animation: fadeInUp 0.8s ease-out 0.5s both;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Sections */
+        section {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .tag-cyan {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+        }
+
+        .tag-purple {
+            background: var(--purple-dim);
+            color: var(--purple);
+        }
+
+        /* Feature cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+        }
+
+        .feature-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding: 6px 0;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* Engine section */
+        .engine-showcase {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .engine-visual {
+            position: relative;
+            height: 400px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-glass);
+            overflow: hidden;
+            display: grid;
+            place-items: center;
+        }
+
+        .engine-visual::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .orbit-container {
+            position: relative;
+            width: 280px; height: 280px;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(0, 212, 255, 0.15);
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+        }
+
+        .orbit:nth-child(1) { width: 100%; height: 100%; animation-duration: 20s; }
+        .orbit:nth-child(2) { width: 70%; height: 70%; top: 15%; left: 15%; animation-duration: 15s; animation-direction: reverse; }
+        .orbit:nth-child(3) { width: 40%; height: 40%; top: 30%; left: 30%; animation-duration: 10s; }
+
+        .orbit-dot {
+            position: absolute;
+            width: 8px; height: 8px;
+            background: var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--cyan);
+            top: -4px; left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .orbit:nth-child(2) .orbit-dot { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
+        .orbit:nth-child(3) .orbit-dot { background: #6366f1; box-shadow: 0 0 10px #6366f1; }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .core-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px; height: 60px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 40px rgba(0, 212, 255, 0.4);
+        }
+
+        .engine-details h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .engine-details p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .metric-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .metric {
+            flex: 1;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--cyan);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Architecture */
+        .arch-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 48px 0;
+        }
+
+        .arch-node {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 20px 28px;
+            text-align: center;
+            min-width: 160px;
+            transition: all 0.3s;
+        }
+
+        .arch-node:hover {
+            border-color: var(--cyan);
+            transform: scale(1.05);
+        }
+
+        .arch-node .icon { font-size: 1.5rem; margin-bottom: 8px; }
+        .arch-node .name { font-weight: 600; font-size: 0.9rem; }
+        .arch-node .desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+        .arch-arrow {
+            color: var(--cyan);
+            font-size: 1.5rem;
+            animation: flow 1.5s infinite;
+        }
+
+        @keyframes flow {
+            0%, 100% { opacity: 0.3; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(4px); }
+        }
+
+        /* Changelog */
+        .changelog-timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .changelog-timeline::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--cyan), var(--purple));
+        }
+
+        .changelog-item {
+            position: relative;
+            padding-left: 64px;
+            padding-bottom: 48px;
+        }
+
+        .changelog-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .changelog-dot {
+            position: absolute;
+            left: 15px;
+            top: 4px;
+            width: 20px; height: 20px;
+            background: var(--bg-primary);
+            border: 3px solid var(--cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+
+        .changelog-item.major .changelog-dot {
+            border-color: var(--purple);
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .changelog-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--cyan);
+            margin-bottom: 4px;
+        }
+
+        .changelog-item.major .changelog-version {
+            color: var(--purple);
+        }
+
+        .changelog-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .changelog-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 20px 24px;
+        }
+
+        .changelog-content ul {
+            list-style: none;
+        }
+
+        .changelog-content li {
+            position: relative;
+            padding-left: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .changelog-content li::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 10px;
+            width: 6px; height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+        }
+
+        .changelog-item.major .changelog-content li::before {
+            background: var(--purple);
+        }
+
+        .changelog-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .badge-new { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-fix { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge-imp { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+        /* Code block */
+        .code-block {
+            background: #0d0d15;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-sm);
+            padding: 20px 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin-top: 16px;
+        }
+
+        .code-block .comment { color: #6b7280; }
+        .code-block .string { color: #34d399; }
+        .code-block .keyword { color: #f472b6; }
+        .code-block .func { color: #60a5fa; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-glass);
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        footer .logo {
+            justify-content: center;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .engine-showcase { grid-template-columns: 1fr; }
+            .stats-bar { gap: 24px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .arch-flow { flex-direction: column; }
+            .arch-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh"></div>
+    <div class="bg-grid"></div>
+
+    <nav>
+        <div class="nav-inner">
+            <a href="#" class="logo">
+                <div class="logo-icon">◈</div>
+                NEXUS CORE
+            </a>
+            <ul class="nav-links">
+                <li><a href="#recursos">Recursos</a></li>
+                <li><a href="#mpeg-ts">MPEG-TS</a></li>
+                <li><a href="#hls">HLS</a></li>
+                <li><a href="#arquitetura">Arquitetura</a></li>
+                <li><a href="#changelog">Changelog</a></li>
+                <li><a href="https://www.mediafire.com/file/r9oiasko4e28zwg/plugin.video.nexuscoreproxy.5.0.0.zip/file" target="_blank" rel="noopener noreferrer" style="color: var(--cyan);">⬇ Download</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <div class="badge">v4.0.0 Disponível</div>
+            <h1>
+                Proxy de Streaming<br>
+                <span class="gradient">MPEG-TS & HLS</span><br>
+                para Kodi
+            </h1>
+            <p>
+                Engine de proxy local com buffering inteligente, sutura dinâmica,
+                correção de continuidade e reconexão adaptativa. Zero dependências externas.
+            </p>
+            <div class="hero-buttons">
+                <a href="https://www.mediafire.com/file/r9oiasko4e28zwg/plugin.video.nexuscoreproxy.5.0.0.zip/file" class="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                    <span>⬇</span> Baixar Plugin v5.0.0
+                </a>
+                <a href="#recursos" class="btn btn-secondary">
+                    <span>▶</span> Explorar Recursos
+                </a>
+                <a href="#changelog" class="btn btn-secondary">
+                    <span>📋</span> Ver Changelog
+                </a>
+            </div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Protocolos</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">Dependências</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">5</div>
+                    <div class="stat-label">Estratégias</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Reconexões</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="recursos">
+        <div class="section-header animate-on-scroll">
+            <span class="tag tag-cyan">Recursos Principais</span>
+            <h2>Tudo que o NEXUS CORE faz</h2>
+            <p>Do buffer inicial à reconexão silenciosa, cada frame é tratado com precisão cirúrgica.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🔧</div>
+                <h3>Sutura Dinâmica</h3>
+                <p>Reconecta streams ao vivo sem perda de sincronia. Busca reversa (10 offsets) e normal (10 offsets) para alinhar pacotes TS no byte 0x47 exato.</p>
+                <ul class="feature-list">
+                    <li>Busca primária em cache live</li>
+                    <li>Fallback para cache backup</li>
+                    <li>Timeout adaptativo (2s–8s)</li>
+                    <li>Sliding window com alinhamento 0x47</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🛡️</div>
+                <h3>ContinuityFixer</h3>
+                <p>Reescreve o campo Continuity Counter (CC) por PID em tempo real, eliminando glitches no MediaCodec e decodificadores Android.</p>
+                <ul class="feature-list">
+                    <li>Detecção de descontinuidade por PID</li>
+                    <li>Resync automático pós-reconexão</li>
+                    <li>Ignora null packets (0x1FFF)</li>
+                    <li>Processamento packet-a-packet</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">⚡</div>
+                <h3>Reconexão Adaptativa</h3>
+                <p>5 estratégias de reconexão (S0–S4) com rotação de identidade (User-Agent + IP falso) a cada tentativa. Circuit breaker integrado.</p>
+                <ul class="feature-list">
+                    <li>Rotação de UA da pool VLC</li>
+                    <li>IPs falsos dinâmicos (X-Forwarded-For)</li>
+                    <li>Backoff exponencial com jitter</li>
+                    <li>Circuit breaker com cooldown</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">💾</div>
+                <h3>SingleTailCache</h3>
+                <p>Sistema de cache live + backup que promove dados uma única vez por reconexão, garantindo overlap perfeito entre conexões antigas e novas.</p>
+                <ul class="feature-list">
+                    <li>Cache live em memória</li>
+                    <li>Backup promovido automaticamente</li>
+                    <li>Tamanho dinâmico baseado em bitrate</li>
+                    <li>Alinhamento em 188 bytes</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">📊</div>
+                <h3>Controle de Latência</h3>
+                <p>Ajusta dinamicamente o tamanho dos chunks de leitura baseado na latência média da rede, balanceando velocidade e estabilidade.</p>
+                <ul class="feature-list">
+                    <li>Janela de 20 amostras</li>
+                    <li>Target: 180ms por chunk</li>
+                    <li>Range: 1.5KB – 256KB</li>
+                    <li>Ajuste proporcional ±10%–25%</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🎯</div>
+                <h3>Null-Packet Pump</h3>
+                <p>Evita EOF prematuro no Kodi injetando bursts de 64 null packets a cada 80ms quando a fila do cliente esvazia durante reconexão.</p>
+                <ul class="feature-list">
+                    <li>64 packets TS null (0x1FFF)</li>
+                    <li>Intervalo: 80ms</li>
+                    <li>Anti-travamento do player</li>
+                    <li>Ativado apenas em stall</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="mpeg-ts" style="background: var(--bg-secondary); border-radius: 32px; margin: 0 16px; max-width: calc(100% - 32px); padding: 100px 48px;">
+        <div class="section-header animate-on-scroll">
+            <span class="tag tag-cyan">Proxy MPEG-TS</span>
+            <h2>Engine v36-STDLIB</h2>
+            <p>Proxy TS construído 100% com biblioteca padrão Python. Sem FastAPI, sem aiohttp, sem uvicorn.</p>
+        </div>
+
+        <div class="engine-showcase">
+            <div class="engine-visual animate-on-scroll">
+                <div class="orbit-container">
+                    <div class="orbit"><div class="orbit-dot"></div></div>
+                    <div class="orbit"><div class="orbit-dot"></div></div>
+                    <div class="orbit"><div class="orbit-dot"></div></div>
+                    <div class="core-center">◈</div>
+                </div>
+            </div>
+            <div class="engine-details animate-on-scroll">
+                <h3>Servidor HTTP Local Thread-Safe</h3>
+                <p>O <code>StreamManager</code> mantém um singleton thread-safe que reutiliza engines por URL. Cada engine gerencia seu próprio <code>BroadcastBus</code> com filas individuais por cliente.</p>
+
+                <div class="metric-row">
+                    <div class="metric">
+                        <div class="metric-value">3 MB</div>
+                        <div class="metric-label">Prebuffer Inicial</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">10 s</div>
+                        <div class="metric-label">Idle Timeout</div>
+                    </div>
+                </div>
+                <div class="metric-row">
+                    <div class="metric">
+                        <div class="metric-value">188 B</div>
+                        <div class="metric-label">Packet Size</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">2048</div>
+                        <div class="metric-label">Queue Size</div>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Chamada via plugin Kodi</span>
+<span class="keyword">plugin</span>://<span class="string">plugin.video.nexuscoreproxy</span>/?<span class="func">action</span>=play&<span class="func">url</span>=STREAM_URL
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hls">
+        <div class="section-header animate-on-scroll">
+            <span class="tag tag-purple">Proxy HLS</span>
+            <h2>Adaptive HLS Proxy</h2>
+            <p>Reescreve playlists M3U8 em tempo real, analisa métricas de rede e reconecta proativamente antes que o buffer zere.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🔄</div>
+                <h3>Reescrita de Playlist</h3>
+                <p>Intercepta a playlist M3U8 e substitui todas as URLs de segmentos e chaves por endpoints locais do proxy, mantendo tokens e query strings intactos.</p>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">📡</div>
+                <h3>StreamAnalyzer</h3>
+                <p>Monitora latência, jitter e velocidade de download em tempo real. Dispara reconexão proativa quando detecta risco de buffer underrun.</p>
+                <ul class="feature-list">
+                    <li>Média móvel de 5 amostras</li>
+                    <li>Detecção de alta latência (>2s)</li>
+                    <li>Detecção de jitter (>1.2s)</li>
+                    <li>Risco de bitrate comparativo</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">⚙️</div>
+                <h3>Perfis de Player</h3>
+                <p>Emula headers de players reais (ExoPlayer, VLC, Kodi) para máxima compatibilidade com servidores de streaming que filtram por User-Agent.</p>
+                <ul class="feature-list">
+                    <li>ExoPlayer/Lavf60.3.100</li>
+                    <li>VLC/3.0.20 Vetinari</li>
+                    <li>Lavf/60.3.100 (Kodi)</li>
+                    <li>Redirecionamentos 301-308</li>
+                </ul>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">💿</div>
+                <h3>LRU Cache de Segmentos</h3>
+                <p>Mantém os últimos 5 segmentos em cache de memória. Se o Kodi solicitar um segmento recente, a resposta é instantânea, sem novo download.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="arquitetura">
+        <div class="section-header animate-on-scroll">
+            <span class="tag tag-cyan">Arquitetura</span>
+            <h2>Fluxo de Dados</h2>
+            <p>Como o stream percorre o NEXUS CORE desde a origem até o Kodi.</p>
+        </div>
+
+        <div class="arch-flow animate-on-scroll">
+            <div class="arch-node">
+                <div class="icon">🌐</div>
+                <div class="name">Servidor Origem</div>
+                <div class="desc">TS / HLS / M3U8</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="icon">🔌</div>
+                <div class="name">open_stream()</div>
+                <div class="desc">TLS + Headers</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="icon">⚙️</div>
+                <div class="name">TSEngine</div>
+                <div class="desc">Sutura + CC Fix</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="icon">📡</div>
+                <div class="name">BroadcastBus</div>
+                <div class="desc">Queue por Cliente</div>
+            </div>
+            <div class="arch-arrow">→</div>
+            <div class="arch-node">
+                <div class="icon">🎬</div>
+                <div class="name">Kodi Player</div>
+                <div class="desc">video/mp2t</div>
+            </div>
+        </div>
+
+        <div class="features-grid" style="margin-top: 48px;">
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🔍</div>
+                <h3>Detecção Inteligente de URL</h3>
+                <p>O addon detecta automaticamente o tipo de stream baseado no path da URL, sem necessidade de configuração manual.</p>
+                <div class="code-block">
+<span class="comment"># Tipos suportados</span>
+.ts          → <span class="string">ts_ext</span>
+.m3u8        → <span class="string">hls</span>
+/123456      → <span class="string">ts_noext</span>
+/AbCd/123    → <span class="string">ts_noext</span>
+                </div>
+            </div>
+
+            <div class="feature-card animate-on-scroll">
+                <div class="feature-icon">🧠</div>
+                <h3>Conversão Automática</h3>
+                <p>URLs são convertidas automaticamente entre TS e HLS conforme o proxy escolhido, preservando query strings e tokens de autenticação.</p>
+                <div class="code-block">
+<span class="comment"># TS sem extensão → HLS</span>
+/live/AbCd/123  →  /live/AbCd/123<span class="string">.m3u8</span>
+
+<span class="comment"># HLS → TS</span>
+/stream.m3u8    →  /stream<span class="string">.ts</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="changelog">
+        <div class="section-header animate-on-scroll">
+            <span class="tag tag-purple">Histórico</span>
+            <h2>Changelog Completo</h2>
+            <p>Evolução do NEXUS CORE desde a primeira versão.</p>
+        </div>
+
+        <div class="changelog-timeline">
+            <div class="changelog-item major animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v4.0.0 — NEXUS CORE</div>
+                <div class="changelog-date">2026</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Rebrand completo para NEXUS CORE</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Suporte dual-proxy: MPEG-TS e HLS no mesmo addon</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Diálogo de seleção de proxy (TS ou HLS) ao abrir canal</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Parâmetro <code>proxy_type=ts|hls</code> para forçar proxy sem diálogo</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Detecção inteligente de tipo de URL (HLS, TS com extensão, TS sem extensão)</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Conversão automática entre formatos preservando query strings</li>
+                        <li><span class="changelog-badge badge-imp">MELHORIA</span> Addon metadata em inglês e português</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="changelog-item major animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v3.3.0 — Engine v36-STDLIB</div>
+                <div class="changelog-date">2026</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-new">NOVO</span> tsproxy.py reescrito com stdlib pura (sem fastapi/aiohttp/uvicorn)</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> <code>_ensure_server_running()</code> thread-safe com lock global (anti-duplicata)</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> <code>TSEngine.add_client()</code> / <code>remove_client()</code> com timer de idle-shutdown</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Endpoint <code>/health</code> no servidor proxy TS</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> PrefetchWorker — conexão antecipada para reconexão instantânea</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> LatencyController — ajusta chunk size dinamicamente (target 180ms)</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> BitrateMeter — monitora bitrate em janela de 3 segundos</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> CircuitBreaker — proteção contra falhas consecutivas (threshold: 8, cooldown: 15s)</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> ContinuityFixer — reescreve CC por PID (anti-glitch MediaCodec/Android)</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> SingleTailCache — cache live + backup com promote uma vez por reconexão</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Sutura — busca reversa (primária, 10 offsets) + normal (secundária, 10 offsets)</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Sutura Timeout — 4s→8s dinâmico, força Live Ahead se não convergir</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Sliding Window — descarta excesso alinhado em 0x47</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> 5 estratégias de reconexão S0-S4 com rotação de identidade (IP + UA)</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Null-packet pump — burst 64 pkts a cada 0.1s quando fila seca (anti-EOF Kodi)</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Prebuffer 3MB — aguarda antes de abrir stream para Kodi</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> StreamManager — singleton thread-safe, reutiliza engine por URL</li>
+                        <li><span class="changelog-badge badge-imp">MANTIDO</span> Kill Zombies — ENGINE_IDLE_TIMEOUT=10s mata engine sem clientes</li>
+                        <li><span class="changelog-badge badge-imp">MELHORIA</span> Detecção ts_noext cobre padrões alfanuméricos (user/pass/id)</li>
+                        <li><span class="changelog-badge badge-imp">MELHORIA</span> Contexto TLS customizado com ciphers específicos e TLS 1.2+</li>
+                        <li><span class="changelog-badge badge-fix">FIX</span> Headers X-Forwarded-For e X-Real-IP com IPs falsos rotativos</li>
+                        <li>ZERO dependências externas para o proxy TS (apenas stdlib Python 3.6+)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="changelog-item animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v3.2.1</div>
+                <div class="changelog-date">2025</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-fix">FIX</span> Links TS sem extensão com segmentos alfanuméricos (user/pass) agora detectados corretamente como ts_noext</li>
+                        <li><span class="changelog-badge badge-fix">FIX</span> Conversão ts_noext → HLS acrescenta .m3u8 ao final do path</li>
+                        <li>Query string (tokens) preservada em todas as conversões</li>
+                        <li>10 casos de teste cobertos e validados</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="changelog-item animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v3.2.0</div>
+                <div class="changelog-date">2025</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Detecção inteligente: HLS, TS com extensão, TS sem extensão (ID numérico)</li>
+                        <li>TS sem extensão + proxy TS → não altera (tsproxy aceita sem extensão)</li>
+                        <li>TS sem extensão + proxy HLS → acrescenta .m3u8 ao final do path</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="changelog-item animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v3.1.0</div>
+                <div class="changelog-date">2025</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Diálogo de seleção de proxy (TS ou HLS) ao abrir canal</li>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Suporte ao parâmetro <code>proxy_type=ts|hls</code> para forçar proxy sem diálogo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="changelog-item animate-on-scroll">
+                <div class="changelog-dot"></div>
+                <div class="changelog-version">v3.0.0</div>
+                <div class="changelog-date">2025</div>
+                <div class="changelog-content">
+                    <ul>
+                        <li><span class="changelog-badge badge-new">NOVO</span> Versão inicial com suporte ao tsproxy MPEG-TS</li>
+                        <li>Proxy local com buffering e headers customizados</li>
+                        <li>Chamada via <code>plugin://plugin.video.nexuscoreproxy/?action=play&url=STREAM_URL</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="download" style="background: var(--bg-secondary); border-radius: 32px; margin: 0 16px 48px; max-width: calc(100% - 32px); padding: 80px 48px; text-align: center;">
+        <div class="animate-on-scroll">
+            <span class="tag tag-cyan">Download</span>
+            <h2 style="font-size: 2.5rem; font-weight: 800; margin: 16px 0 20px; letter-spacing: -1px;">Pronto para usar?</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 500px; margin: 0 auto 32px;">
+                Baixe a última versão do NEXUS CORE e comece a transmitir com estabilidade máxima no Kodi.
+            </p>
+            <a href="https://www.mediafire.com/file/r9oiasko4e28zwg/plugin.video.nexuscoreproxy.5.0.0.zip/file" 
+               class="btn btn-primary" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               style="font-size: 1.1rem; padding: 18px 40px;">
+                <span>⬇</span> Baixar plugin.video.nexuscoreproxy.5.0.0.zip
+            </a>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 16px;">
+                Hospedado no MediaFire · Compatível com Kodi 19+ (Matrix/Omega)
+            </p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="logo">
+            <div class="logo-icon">◈</div>
+            NEXUS CORE
+        </div>
+        <p>NEXUS CORE Proxy — MPEG-TS & HLS para Kodi</p>
+        <p style="margin-top: 8px; font-size: 0.75rem;">Desenvolvido por Deivid Silva · GPL-2.0-or-later</p>
+    </footer>
+
+    <script>
+        // Scroll animation observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
